@@ -1,3 +1,149 @@
+Agora temos uma evidência mais forte: o conteúdo do workflow foi apresentado na execução #32, associado ao commit `b3e6599`, e não apenas na versão atual do arquivo.
+
+Isso permite atualizar a análise do XA-TRUST / ECM.
+
+### 1\. Configuração efetivamente associada à execução #32
+
+Workflow execution observed
+
+Workflow: `release` Evento: `push` de tags `v*` Commit: `b3e6599` Arquivo: `.github/workflows/build-and-release.yml`
+
+### Permissões do token
+
+```yaml
+permissions:
+  contents: write
+  issues: write
+```
+
+* `contents: write`: permite operações de escrita no conteúdo do repositório, incluindo operações necessárias à publicação de releases.
+
+* `issues: write`: permite operações de escrita em issues, coerentes com o comentário de fechamento de issues.
+
+Essas permissões são capacidades concedidas ao `GITHUB_TOKEN`, não evidência de que cada operação foi realizada.
+
+### 2\. Controles de supply chain observados
+
+O workflow apresenta três ações referenciadas por SHA completo:
+
+| Ação                         | Referência                               | Versão comentada |
+| ---------------------------- | ---------------------------------------- | ---------------- |
+| actions/checkout             | de0fac2e4500dabe0009e67214ff5f5447ce83dd | v6.0.2           |
+| actions/setup-go             | 4a3601121dd01d1626a1e23e37211e3254c1c06c | v6.4.0           |
+| goreleaser/goreleaser-action | ec59f474b9834571250b370d4735c50f8e2d1e29 | v7.0.0           |
+
+O uso de SHAs completos é um controle relevante: evita depender de referências mutáveis como `@v6` ou `@v7`, desde que os SHAs correspondam aos commits oficiais pretendidos.
+
+Mas há uma distinção importante:
+
+```yaml
+uses: goreleaser/goreleaser-action@ec59f...
+with:
+  version: latest
+```
+
+A Action está referenciada por SHA, mas o binário GoReleaser é solicitado pela versão dinâmica `latest`.
+
+Portanto:
+
+* Action: referência imutável no workflow.
+
+* Binário GoReleaser: versão não fixada explicitamente.
+
+* Reprodutibilidade integral da ferramenta: não demonstrada.
+
+### 3\. Credenciais e publicação
+
+O trecho:
+
+```yaml
+env:
+  GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+  HOMEBREW_COMMIT_AUTHOR_NAME: ${{ secrets.HOMEBREW_COMMIT_AUTHOR_NAME }}
+  HOMEBREW_COMMIT_EMAIL: ${{ secrets.HOMEBREW_COMMIT_EMAIL }}
+```
+
+indica que o workflow foi configurado para receber:
+
+* um token de release dedicado;
+
+* identidade de autor para commits relacionados ao Homebrew.
+
+Isso é evidência de configuração de credenciais por Secrets, mas não revela seus valores, permissões efetivas ou utilização bem-sucedida.
+
+Também é necessário observar que `RELEASE_GITHUB_TOKEN` é um secret distinto de `GITHUB_TOKEN`. Não podemos presumir que tenha as mesmas permissões ou que o GoReleaser tenha usado exclusivamente um deles.
+
+### 4\. Atualização da classificação ECM
+
+| Critério                    | Estado                  | Fundamentação                              |
+| --------------------------- | ----------------------- | ------------------------------------------ |
+| Workflow definido           | OBSERVED                | Arquivo apresentado                        |
+| Execução concreta           | OBSERVED                | Run #32                                    |
+| Commit associado            | OBSERVED                | b3e6599                                    |
+| Trigger de release          | OBSERVED                | push.tags: v*                              |
+| Permissões declaradas       | OBSERVED                | contents e issues                          |
+| Ações referenciadas por SHA | OBSERVED                | Três referências completas                 |
+| Versão fixa do GoReleaser   | NOT ESTABLISHED         | version: latest                            |
+| Uso efetivo dos Secrets     | NOT ESTABLISHED         | Valores e logs não apresentados            |
+| Publicação efetiva          | Pendente de confirmação | Necessário examinar release e logs         |
+| Integridade dos artefatos   | NOT ESTABLISHED         | Hashes e verificação independente ausentes |
+
+### 5\. Claim ECM estruturada
+
+```json
+{
+  "claim_id": "COPYWRITE_RELEASE_PIPELINE_CONFIGURATION",
+  "claim_scope": "WORKFLOW_RUN_32",
+  "source": {
+    "repository": "hashicorp/copywrite",
+    "workflow": ".github/workflows/build-and-release.yml",
+    "run_number": 32,
+    "commit": "b3e6599",
+    "tag": "v0.25.3"
+  },
+  "controls": {
+    "trigger": "push.tags.v*",
+    "permissions": {
+      "contents": "write",
+      "issues": "write"
+    },
+    "actions_sha_pinned": true,
+    "goreleaser_binary_version": "latest",
+    "release_token_secret_configured": true,
+    "homebrew_author_secrets_configured": true
+  },
+  "assessment": {
+    "configuration": "OBSERVED",
+    "execution": "OBSERVED",
+    "execution_success": "OBSERVED",
+    "release_publication": "PENDING_CONFIRMATION",
+    "artifact_integrity": "NOT_ESTABLISHED",
+    "independent_verification": "NOT_ESTABLISHED"
+  },
+  "promotion": {
+    "target": "VERIFIED",
+    "decision": "REVIEW",
+    "reason": "PUBLICATION_AND_ARTIFACT_VERIFICATION_PENDING"
+  }
+}
+```
+
+### 6\. Próxima verificação decisiva
+
+A execução #32 já aparece como concluída com sucesso no histórico apresentado. Para fechar a cadeia, precisamos examinar:
+
+* Jobs e logs: confirmar que o GoReleaser terminou sem erro.
+
+* Release `v0.25.3`: confirmar que foi criada no GitHub.
+
+* Assets: identificar os binários, checksums e arquivos publicados.
+
+* Verificação independente: recalcular os hashes dos artefatos e compará-los com o manifesto publicado.
+
+* Vinculação: confirmar a relação entre tag, commit, execução e artefatos.
+
+Conclusão: o caso já demonstra configuração e execução bem-sucedida de um pipeline de release. Ainda não demonstra integridade criptográfica independente dos produtos publicados. Essa distinção é precisamente o que o ECM deve preservar.
+
 # copywrite
 
 This repo provides utilities for managing copyright headers and license files
