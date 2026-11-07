@@ -59,7 +59,6 @@ Use "copywrite [command] --help" for more information about a command.
 ### Automatic Copyright Holder Migration
 
 The `copywrite headers` command automatically detects and updates old copyright
-holders (such as "HashiCorp, Inc.") to the configured holder (default: "IBM Corp.")
 while preserving existing year information and updating year ranges.
 
 This ensures that:
@@ -145,8 +144,7 @@ project {
   license = "MPL-2.0"
 
   # (OPTIONAL) Represents the copyright holder used in all statements
-  # Default: IBM Corp.
-  # copyright_holder = ""
+  
 
   # (OPTIONAL) Represents the year that the project initially began
   # This is used as the starting year in copyright statements
